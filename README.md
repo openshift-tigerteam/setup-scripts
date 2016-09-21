@@ -19,7 +19,7 @@ Next, you can run the setup
 There are 3 options currently
 ```
 Usage: ./metrics_setup.sh {--setup|--cleanup|--help}
-	--setup   : Setup and Configure Metrics for Rogers
+	--setup   : Setup and Configure Metrics
 	--cleanup : Use this to cleanup and start over
 	--help    : This help page
 ```
