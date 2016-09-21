@@ -92,7 +92,7 @@ case $opt in
         *)
                 echo "Deploy Metrics"
                 echo "Usage: $0 {--setup|--cleanup|--help}"
-                echo "	--setup   : Setup and Configure Metrics for Rogers"
+                echo "	--setup   : Setup and Configure Metrics"
                 echo "	--cleanup : Use this to cleanup and start over"
                 echo "	--help    : This help page"
                 exit
