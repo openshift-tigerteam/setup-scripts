@@ -23,3 +23,8 @@ Usage: ./metrics_setup.sh {--setup|--cleanup|--help}
 	--cleanup : Use this to cleanup and start over
 	--help    : This help page
 ```
+
+## Logging
+In [here](logging) you'll find resources to setup log aggragation post-installation.
+
+*EXPEREMENTAL! NOT FULLY TESTED YET*
