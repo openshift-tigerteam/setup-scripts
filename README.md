@@ -28,3 +28,14 @@ Usage: ./metrics_setup.sh {--setup|--cleanup|--help}
 In [here](logging) you'll find resources to setup log aggragation post-installation.
 
 *EXPEREMENTAL! NOT FULLY TESTED YET*
+
+## Uninstall
+In [here](uninstall) you'll find an uninstall script that you'll need to run along with the uninstaller ansible-playbook 
+
+```
+./openshift_uninstall.sh
+```
+If you are running multi-master
+```
+./openshift_uninstall.sh --etcd
+```
