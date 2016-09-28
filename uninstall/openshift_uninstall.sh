@@ -1,7 +1,7 @@
 #!/bin/bash
 [[ $1 = "--etcd" ]] && etcd=true
 
-ansible all -m shell -a 'yum remove -y openshift* atomic*'
+ansible all -m shell -a 'yum remove -y openshift* atomic* openvswitch'
  
 ansible all -m shell -a 'rm -rf /etc/origin/* || true '
 ansible all -m shell -a 'rm -rf /etc/sysconfig/atomic* || true '
