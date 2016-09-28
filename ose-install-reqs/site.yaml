@@ -1,0 +1,88 @@
+- hosts: ose-servers
+  sudo: yes
+  tasks:
+
+  - name: Ensure hosts are registered with subscription-manager
+    shell: subscription-manager status
+    register: subscription_manager_status
+    failed_when: "'Current' not in subscription_manager_status.stdout"
+
+  - name: Disable all subscription-manager repos
+    shell: subscription-manager repos --disable="*"
+
+  - name: Enable rhel-7-server-rpms rhel-7-server-extras-rpms rhel-7-server-ose-3.0-rpms
+    shell: subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.0-rpms"
+
+  - name: Make sure OpenShift Enterprise subscription is attached
+    shell: subscription-manager list --consumed  | nice grep "Red Hat OpenShift Enterprise"
+    register: openshift_subscription_attached
+    failed_when: openshift_subscription_attached.rc != 0
+
+  - name: Remove NetworkManager*
+    shell: yum -y remove NetworkManager*
+
+  - name: Check DNS entry for your domain name
+    shell: dig foo.{{domain_name}} | grep ^foo.{{domain_name}}| awk '{print $5}'
+    register: dns_resolved
+    failed_when: dns_resolved == ""
+
+  - name: Check host RAM
+    shell: free -h | grep ^Mem | awk '{print $2}' | grep ^[0-9] | sed 's/G//'
+    register: host_ram
+    failed_when: host_ram.stdout|int < {{host_ram_value_in_gb}}|int
+
+  - name: Check host root drive capacity
+    shell: df -vh / | awk '{print $2}' | grep ^[0-9] | sed 's/G//'
+    register: root_drive_capacity
+    failed_when: root_drive_capacity.stdout|int < {{root_drive_capacity_value_in_gb}}
+
+  - name: set SELinux to enforcing
+    action: selinux policy=targeted state=enforcing
+
+  - name: Ensure IPtables is installed
+    yum: name=iptables state=latest
+
+  - name: Ensure IPtables is running and enabled
+    service: name=iptables state=started enabled=yes
+
+  - name: Ensure NTP is installed
+    yum: name=ntp state=latest
+
+  - name: Ensure NTP is running and enabled
+    service: name=ntpd state=started enabled=yes
+
+  - name: Install wget
+    yum: name=wget state=latest
+
+  - name: Install net-tools
+    yum: name=net-tools state=latest
+
+  - name: Install bind-utils
+    yum: name=bind-utils state=latest
+
+  - name: Install iptables-services
+    yum: name=iptables-services state=latest
+
+  - name: Install bridge-utils
+    yum: name=bridge-utils state=latest
+
+  - name: Install docker
+    yum: name=docker state=latest
+
+  - name: Ensure docker is running and enabled
+    service: name=docker state=started enabled=yes
+
+  - name: Check internet connectivity
+    shell: ping -c 1 {{ping_domain}}
+    register: internet_status
+    failed_when: "'64 bytes from' not in internet_status.stdout"
+
+  #- debug: msg="{{ variable.stdout }}"
+
+- hosts: ose-masters
+  sudo: yes
+  tasks:
+  - name: Check master host for mounted /mnt/registry 
+    shell: df -vh /mnt/registry | awk '{print $2}' | grep ^[0-9] | sed 's/G//'
+    register: registry_capacity
+    failed_when: registry_capacity.stdout|int < {{registry_capacity_value_in_gb}}

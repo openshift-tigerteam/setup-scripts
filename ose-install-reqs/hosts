@@ -1,0 +1,15 @@
+[ose-servers]
+ose-master-demo-1.os1.phx2.redhat.com
+ose-node-demo-1.os1.phx2.redhat.com
+
+
+[ose-masters]
+ose-master-demo-1.os1.phx2.redhat.com
+
+[ose-servers:vars]
+domain_name = xip.io
+ansible_ssh_user = root
+host_ram_value_in_gb = 1
+root_drive_capacity_value_in_gb = 5
+registry_capacity_value_in_gb = 5
+ping_domain = registry.access.redhat.com
