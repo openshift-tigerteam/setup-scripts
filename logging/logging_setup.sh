@@ -57,6 +57,33 @@ secrets:
 - name: logging-deployer
 API
 
+oc create -f - <<API
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aggregated-logging-kibana
+secrets:
+- name: aggregated-logging-kibana
+API
+
+oc create -f - <<API
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aggregated-logging-elasticsearch
+secrets:
+- name: aggregated-logging-elasticsearch
+API
+
+oc create -f - <<API
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aggregated-logging-fluentd
+secrets:
+- name: aggregated-logging-fluentd
+API
+
 oc policy add-role-to-user edit --serviceaccount logging-deployer
 
 oadm policy add-scc-to-user  privileged system:serviceaccount:logging:aggregated-logging-fluentd
@@ -66,8 +93,9 @@ oadm policy add-cluster-role-to-user cluster-reader system:serviceaccount:loggin
 oc new-app logging-deployer-template \
              --param KIBANA_HOSTNAME=${kibanaurl} \
              --param ES_CLUSTER_SIZE=1 \
-             --param PUBLIC_MASTER_URL=https://${pmasterurl}:8443
-             --param MASTER_URL=https://${masterurl}com:8443
+             --param PUBLIC_MASTER_URL=https://${pmasterurl}:8443 \
+             --param IMAGE_PREFIX="registry.access.redhat.com/openshift3/" \
+             --param MASTER_URL=https://${masterurl}:8443
 
 oc new-app logging-support-template
 
@@ -122,6 +150,7 @@ oc delete all --selector logging-infra=kibana
 oc delete all --selector logging-infra=fluentd
 oc delete all --selector logging-infra=elasticsearch
 oc delete all --selector logging-infra=curator
+oc delete all,sa,oauthclient --selector logging-infra=support
 oc delete all,sa,oauthclient --selector logging-infra=support
 oc delete secret logging-fluentd logging-elasticsearch logging-es-proxy logging-kibana logging-kibana-proxy logging-kibana-ops-proxy
 oc project default
