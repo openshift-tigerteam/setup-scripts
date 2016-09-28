@@ -46,6 +46,8 @@ oadm new-project logging --node-selector=""
 
 oc project logging
 
+oc new-app logging-deployer-account-template
+
 oc secrets new logging-deployer nothing=/dev/null
 
 oc create -f - <<API
@@ -84,38 +86,61 @@ secrets:
 - name: aggregated-logging-fluentd
 API
 
+oc create -f - <<API
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aggregated-logging-curator
+secrets:
+- name: aggregated-logging-curator
+API
+
 oc policy add-role-to-user edit --serviceaccount logging-deployer
 
-oadm policy add-scc-to-user  privileged system:serviceaccount:logging:aggregated-logging-fluentd
+oadm policy add-scc-to-user privileged system:serviceaccount:logging:aggregated-logging-fluentd
+oadm policy add-scc-to-user privileged system:serviceaccount:logging:logging-deployer
 
 oadm policy add-cluster-role-to-user cluster-reader system:serviceaccount:logging:aggregated-logging-fluentd
+
+oadm policy add-cluster-role-to-user oauth-editor system:serviceaccount:logging:logging-deployer
+
+oc create configmap logging-deployer \
+   --from-literal kibana-hostname=${kibanaurl} \
+   --from-literal public-master-url=https://${pmasterurl}:8443 \
+   --from-literal es-cluster-size=1 
 
 oc new-app logging-deployer-template \
              --param KIBANA_HOSTNAME=${kibanaurl} \
              --param ES_CLUSTER_SIZE=1 \
              --param PUBLIC_MASTER_URL=https://${pmasterurl}:8443 \
              --param IMAGE_PREFIX="registry.access.redhat.com/openshift3/" \
-             --param MASTER_URL=https://${masterurl}:8443
-
-oc new-app logging-support-template
+             --param MASTER_URL=https://${masterurl}:8443 \
+             --param MODE=install
 
 # Wait for template completion
-echo "Waiting for the template generation...this may take some time...go get coffee"
-sleep 500
+#echo "Waiting for the template generation...this may take some time...go get coffee"
+#sleep 250
 
-oc import-image logging-auth-proxy:${ocpver} --from registry.access.redhat.com/openshift3/logging-auth-proxy:${ocpver}
+#oc new-app logging-support-template
 
-oc import-image logging-kibana:${ocpver} --from registry.access.redhat.com/openshift3/logging-kibana:${ocpver}
 
-oc import-image logging-elasticsearch:${ocpver} --from registry.access.redhat.com/openshift3/logging-elasticsearch:${ocpver}
+#oc import-image logging-auth-proxy:${ocpver} --from registry.access.redhat.com/openshift3/logging-auth-proxy:${ocpver}
 
-oc import-image logging-fluentd:${ocpver} --from registry.access.redhat.com/openshift3/logging-fluentd:${ocpver}
+#oc import-image logging-kibana:${ocpver} --from registry.access.redhat.com/openshift3/logging-kibana:${ocpver}
 
-oc new-app logging-es-template
+#oc import-image logging-elasticsearch:${ocpver} --from registry.access.redhat.com/openshift3/logging-elasticsearch:${ocpver}
+
+#oc import-image logging-fluentd:${ocpver} --from registry.access.redhat.com/openshift3/logging-fluentd:${ocpver}
+
+#oc new-app logging-es-template
 
 # Wait for Fluend to come up
 echo "Waiting for fluend to come up...this may take a while"
 sleep 500
+for node in $(oc get nodes  | grep node | awk '{print $1}')
+do
+  oc label node/${node} logging-infra-fluentd=true
+done
 oc scale dc/logging-fluentd --replicas=${fluentdrep}
 cat <<-EOF
 Add 'metricsPublicURL: "${kibanaurl}"' to /etc/origin/master/master-config.yaml ...it should look like this one
@@ -132,7 +157,7 @@ Add 'metricsPublicURL: "${kibanaurl}"' to /etc/origin/master/master-config.yaml 
     maxRequestsInFlight: 0
     requestTimeoutSeconds: 0
   metricsPublicURL: "https://hawkular.cloudapps.example.com/hawkular/metrics" 
-  loggingPublicURL: "${kibanaurl}"
+  loggingPublicURL: "https://${kibanaurl}"
 
 THEN run the following:
 
