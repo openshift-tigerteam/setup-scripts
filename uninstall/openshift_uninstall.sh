@@ -1,6 +1,6 @@
 #!/bin/bash
 show_help () {
-cat <<HELP
+cat <<-HELP
 ${0} [ --etcd | --help ]
     --etcd - Use this if you have etcd nodes
     --help - prints this screen
