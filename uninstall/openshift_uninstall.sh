@@ -1,4 +1,15 @@
 #!/bin/bash
+basic_checks () {
+if ! which ansible >/dev/null 2>&1 ; then
+  echo "Error: Ansible is either not installed or not in your path"
+  exit
+fi
+if ! ansible -m ping all > /dev/null 2>&1 ; then
+  echo "ping failed"
+  exit
+fi
+}
+#
 show_help () {
 cat <<-HELP
 ${0} [ --etcd | --help ]
@@ -9,6 +20,8 @@ exit
 }
 [[ $1 = "--help" ]] && show_help
 [[ $1 = "--etcd" ]] && etcd=true
+
+basic_checks
 
 ansible all -m shell -a 'yum remove -y openshift* atomic* openvswitch || true'
  
