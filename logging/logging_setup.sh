@@ -136,7 +136,7 @@ oc new-app logging-deployer-template \
 
 # Wait for Fluend to come up
 echo "Waiting for fluend to come up...this may take a while"
-sleep 500
+sleep 200
 for node in $(oc get nodes  | grep node | awk '{print $1}')
 do
   oc label node/${node} logging-infra-fluentd=true
