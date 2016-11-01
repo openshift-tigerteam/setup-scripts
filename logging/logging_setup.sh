@@ -115,6 +115,7 @@ oc new-app logging-deployer-template \
              --param PUBLIC_MASTER_URL=https://${pmasterurl}:8443 \
              --param IMAGE_PREFIX="registry.access.redhat.com/openshift3/" \
              --param MASTER_URL=https://${masterurl}:8443 \
+             --param IMAGE_VERSION=${ocpver} \
              --param MODE=install
 
 # Wait for template completion
@@ -178,6 +179,7 @@ oc delete all --selector logging-infra=curator
 oc delete all,sa,oauthclient --selector logging-infra=support
 oc delete all,sa,oauthclient --selector logging-infra=support
 oc delete secret logging-fluentd logging-elasticsearch logging-es-proxy logging-kibana logging-kibana-proxy logging-kibana-ops-proxy
+oc delete oauthclients kibana-proxy
 oc project default
 sleep 2
 oc delete project logging
