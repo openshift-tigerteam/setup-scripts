@@ -136,12 +136,12 @@ oc new-app logging-deployer-template \
 
 # Wait for Fluend to come up
 echo "Waiting for fluend to come up...this may take a while"
-sleep 200
+sleep 60
 for node in $(oc get nodes  | grep node | awk '{print $1}')
 do
   oc label node/${node} logging-infra-fluentd=true
 done
-oc scale dc/logging-fluentd --replicas=${fluentdrep}
+#oc scale dc/logging-fluentd --replicas=${fluentdrep}
 cat <<-EOF
 Add 'metricsPublicURL: "${kibanaurl}"' to /etc/origin/master/master-config.yaml ...it should look like this one
 
