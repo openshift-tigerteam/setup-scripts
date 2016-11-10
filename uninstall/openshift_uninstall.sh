@@ -1,7 +1,7 @@
 #!/bin/bash
 basic_checks () {
 if ! which ansible >/dev/null 2>&1 ; then
-  echo "Error: Ansible is either not installed or not in your path"
+  echo "Error: Ansible is either not in your path or you need to install atomic-openshift-utils"
   exit
 fi
 if ! ansible -m ping all > /dev/null 2>&1 ; then
