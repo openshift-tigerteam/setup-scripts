@@ -5,6 +5,7 @@ pmasterurl=${PUBLIC_MASTERURL}
 masterurl=${MASTERURL}
 fluentdrep=${FLUENTD_REPLICAS}
 ocpver=${OPENSHIFT_VERSION}
+labelnodes=${LABEL_NODES}
 ##ocpuser="system:admin"
 ocpuser=$(echo -n $(oc whoami))
 #
@@ -22,6 +23,7 @@ presetupcheck () {
     echo "	export PUBLIC_MASTERURL=ose3-master.example.com"
     echo "	export MASTERURL=ose3-master.example.com"
     echo "	export FLUENTD_REPLICAS=2"
+    echo "      export LABEL_NODES=true"
     echo "	export OPENSHIFT_VERSION=3.3.0"
     exit
   fi
@@ -138,8 +140,11 @@ oc new-app logging-deployer-template \
 # Wait for Fluend to come up
 echo "Waiting for fluend to come up...this may take a while"
 sleep 30
-oc label node --all logging-infra-fluentd=true
-
+if ${labelnodes=:false} ; then
+   oc label node --all logging-infra-fluentd=true
+else
+   echo "You elected to not label your nodes...you may have to do this manually!"
+fi
 ###for node in $(oc get nodes  | grep node | awk '{print $1}')
 ###do
 ###  oc label node/${node} logging-infra-fluentd=true
