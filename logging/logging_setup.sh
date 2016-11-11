@@ -3,7 +3,6 @@
 kibanaurl=${KIBANA_HOSTNAME}
 pmasterurl=${PUBLIC_MASTERURL}
 masterurl=${MASTERURL}
-fluentdrep=${FLUENTD_REPLICAS}
 ocpver=${OPENSHIFT_VERSION}
 labelnodes=${LABEL_NODES}
 ##ocpuser="system:admin"
@@ -14,7 +13,6 @@ presetupcheck () {
   [[ -z ${kibanaurl} ]]  && errcount=$[ ${errcount} + 1 ]
   [[ -z ${pmasterurl} ]] && errcount=$[ ${errcount} + 1 ]
   [[ -z ${masterurl} ]]  && errcount=$[ ${errcount} + 1 ]
-  [[ -z ${fluentdrep} ]] && errcount=$[ ${errcount} + 1 ]
   [[ -z ${ocpver} ]]     && errcount=$[ ${errcount} + 1 ]
   if [ ${errcount} -ne  0 ]; then
     echo "Please set the env variables"
@@ -22,8 +20,7 @@ presetupcheck () {
     echo "	export KIBANA_HOSTNAME=kibana.cloudapps.example.com"
     echo "	export PUBLIC_MASTERURL=ose3-master.example.com"
     echo "	export MASTERURL=ose3-master.example.com"
-    echo "	export FLUENTD_REPLICAS=2"
-    echo "      export LABEL_NODES=true"
+    echo "	export LABEL_NODES=true"
     echo "	export OPENSHIFT_VERSION=3.3.0"
     exit
   fi
@@ -137,19 +134,12 @@ oc new-app logging-deployer-template \
 
 #oc new-app logging-es-template
 
-# Wait for Fluend to come up
-echo "Waiting for fluend to come up...this may take a while"
-sleep 30
+# Wait for Fluend to come up echo "Waiting for fluend to come up...this may take a while" sleep 30
 if ${labelnodes=:false} ; then
    oc label node --all logging-infra-fluentd=true
 else
    echo "You elected to not label your nodes...you may have to do this manually!"
 fi
-###for node in $(oc get nodes  | grep node | awk '{print $1}')
-###do
-###  oc label node/${node} logging-infra-fluentd=true
-###done
-#oc scale dc/logging-fluentd --replicas=${fluentdrep}
 cat <<-EOF
 Add 'metricsPublicURL: "${kibanaurl}"' to /etc/origin/master/master-config.yaml ...it should look like this one
 
