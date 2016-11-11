@@ -2,12 +2,14 @@
 #
 hawkurl=${HAWKULAR_HOSTNAME}
 ocpuser=$(echo -n $(oc whoami))
+imagever=${HAWKULAR_IMAGE_VER}
 #
 presetupcheck () {
   if [ -z ${hawkurl} ]; then
     echo "Please set the env variable HAWKULAR_HOSTNAME"
     echo "example:"
     echo "	export HAWKULAR_HOSTNAME=hawkular.cloudapps.example.com"
+    echo "	export HAWKULAR_IMAGE_VER=3.3.0"
     exit
   fi
   if [ ${ocpuser:=null} != "system:admin" ]; then
@@ -40,7 +42,7 @@ cd ~
 
 cp /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml .
 
-oc process -f metrics-deployer.yaml -v IMAGE_PREFIX=openshift3/,IMAGE_VERSION=latest,HAWKULAR_METRICS_HOSTNAME=${hawkurl},USE_PERSISTENT_STORAGE=false | oc create -f -
+oc process -f metrics-deployer.yaml -v IMAGE_PREFIX=openshift3/,IMAGE_VERSION=${imagever:=latest},HAWKULAR_METRICS_HOSTNAME=${hawkurl},USE_PERSISTENT_STORAGE=false | oc create -f -
 
 cat <<-EOF
 Add 'metricsPublicURL: "${hawkurl}/hawkular/metrics"' to /etc/origin/master/master-config.yaml ...it should look like this one
