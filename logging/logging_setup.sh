@@ -177,6 +177,9 @@ oc delete all,sa,oauthclient --selector logging-infra=support
 oc delete all,sa,oauthclient --selector logging-infra=support
 oc delete secret logging-fluentd logging-elasticsearch logging-es-proxy logging-kibana logging-kibana-proxy logging-kibana-ops-proxy
 oc delete oauthclients kibana-proxy
+oc delete templates --all -n logging
+oc delete ds logging-fluentd -n logging
+oc delete pods --all -n logging --now
 oc project default
 sleep 2
 oc delete project logging
