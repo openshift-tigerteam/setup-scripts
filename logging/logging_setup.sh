@@ -2,7 +2,9 @@
 #
 kibanaurl=${KIBANA_HOSTNAME}
 pmasterurl=${PUBLIC_MASTERURL}
+pmasterurlport=${PUBLIC_MASTERURL_PORT}
 masterurl=${MASTERURL}
+masterurlport=${MASTERURL_PORT}
 ocpver=${OPENSHIFT_VERSION}
 labelnodes=${LABEL_NODES}
 ##ocpuser="system:admin"
@@ -14,6 +16,8 @@ presetupcheck () {
   [[ -z ${pmasterurl} ]] && errcount=$[ ${errcount} + 1 ]
   [[ -z ${masterurl} ]]  && errcount=$[ ${errcount} + 1 ]
   [[ -z ${ocpver} ]]     && errcount=$[ ${errcount} + 1 ]
+  [[ -z ${masterurlport} ]]     && errcount=$[ ${errcount} + 1 ]
+  [[ -z ${pmasterurlport} ]]     && errcount=$[ ${errcount} + 1 ]
   if [ ${errcount} -ne  0 ]; then
     echo "Please set the env variables"
     echo "example:"
@@ -22,6 +26,8 @@ presetupcheck () {
     echo "	export MASTERURL=ose3-master.example.com"
     echo "	export LABEL_NODES=true"
     echo "	export OPENSHIFT_VERSION=3.3.0"
+    echo "	export PUBLIC_MASTERURL_PORT=8443"
+    echo "	export MASTERURL_PORT=8443"
     exit
   fi
   if [ ${ocpuser:=null} != "system:admin" ]; then
@@ -105,36 +111,19 @@ oadm policy add-cluster-role-to-user oauth-editor system:serviceaccount:logging:
 
 oc create configmap logging-deployer \
    --from-literal kibana-hostname=${kibanaurl} \
-   --from-literal public-master-url=https://${pmasterurl}:8443 \
+   --from-literal public-master-url=https://${pmasterurl}:${pmasterurlport} \
    --from-literal es-cluster-size=1 
 
 oc new-app logging-deployer-template \
              --param KIBANA_HOSTNAME=${kibanaurl} \
              --param ES_CLUSTER_SIZE=1 \
-             --param PUBLIC_MASTER_URL=https://${pmasterurl}:8443 \
+             --param PUBLIC_MASTER_URL=https://${pmasterurl}:${pmasterurlport} \
              --param IMAGE_PREFIX="registry.access.redhat.com/openshift3/" \
-             --param MASTER_URL=https://${masterurl}:8443 \
+             --param MASTER_URL=https://${masterurl}:${masterurlport} \
              --param IMAGE_VERSION=${ocpver} \
              --param MODE=install
 
-# Wait for template completion
-#echo "Waiting for the template generation...this may take some time...go get coffee"
-#sleep 250
 
-#oc new-app logging-support-template
-
-
-#oc import-image logging-auth-proxy:${ocpver} --from registry.access.redhat.com/openshift3/logging-auth-proxy:${ocpver}
-
-#oc import-image logging-kibana:${ocpver} --from registry.access.redhat.com/openshift3/logging-kibana:${ocpver}
-
-#oc import-image logging-elasticsearch:${ocpver} --from registry.access.redhat.com/openshift3/logging-elasticsearch:${ocpver}
-
-#oc import-image logging-fluentd:${ocpver} --from registry.access.redhat.com/openshift3/logging-fluentd:${ocpver}
-
-#oc new-app logging-es-template
-
-# Wait for Fluend to come up echo "Waiting for fluend to come up...this may take a while" sleep 30
 if ${labelnodes=:false} ; then
    oc label node --all logging-infra-fluentd=true
 else
