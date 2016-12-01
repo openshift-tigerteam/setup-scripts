@@ -11,15 +11,12 @@
     shell: subscription-manager repos --disable="*"
 
   - name: Enable rhel-7-server-rpms rhel-7-server-extras-rpms rhel-7-server-ose-3.0-rpms
-    shell: subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.0-rpms"
+    shell: subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.3-rpms"
 
   - name: Make sure OpenShift Enterprise subscription is attached
     shell: subscription-manager list --consumed  | nice grep "Red Hat OpenShift Enterprise"
     register: openshift_subscription_attached
     failed_when: openshift_subscription_attached.rc != 0
-
-  - name: Remove NetworkManager*
-    shell: yum -y remove NetworkManager*
 
   - name: Check DNS entry for your domain name
     shell: dig foo.{{domain_name}} | grep ^foo.{{domain_name}}| awk '{print $5}'
@@ -67,7 +64,7 @@
     yum: name=bridge-utils state=latest
 
   - name: Install docker
-    yum: name=docker state=latest
+    yum: name=docker-1.10.3 state=latest
 
   - name: Ensure docker is running and enabled
     service: name=docker state=started enabled=yes
