@@ -23,7 +23,7 @@ exit
 
 basic_checks
 
-ansible all -m shell -a 'yum remove -y openshift* atomic* openvswitch || true'
+ansible all -m shell -a 'yum remove -y openshift* atomic* openvswitch openshift-* atomic-*|| true'
  
 ansible all -m shell -a 'rm -rf /etc/origin/* || true '
 ansible all -m shell -a 'rm -rf /etc/sysconfig/atomic* || true '
