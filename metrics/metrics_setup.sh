@@ -10,8 +10,8 @@ presetupcheck () {
     echo "Please set the env variable HAWKULAR_HOSTNAME"
     echo "example:"
     echo "	export HAWKULAR_HOSTNAME=hawkular.cloudapps.example.com"
-    echo "	export HAWKULAR_IMAGE_VER=3.3.0"
-    echo "	export OSE_MASTER_URL=ose3-master.example.com"
+    echo "	export HAWKULAR_IMAGE_VER=3.4"
+    echo "	export OSE_MASTER_URL=https://ose3-master.example.com:8443"
     exit
   fi
   if [ ${ocpuser:=null} != "system:admin" ]; then
@@ -22,8 +22,14 @@ presetupcheck () {
 #
 setup () {
 echo "Starting cluster metrics setup..."
-sleep 5
+[[ ! -f /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml ]] && echo "FATAL: Metrics Deployer File not found!" && exit 254
 oc project openshift-infra
+echo "Cleaning up environment...it's okay if you see errors here"
+oc delete all,sa,templates,secrets,pvc --selector="metrics-infra"
+oc delete sa,secret metrics-deployer
+oc secrets new metrics-deployer nothing=/dev/null
+oadm policy add-cluster-role-to-user cluster-reader system:serviceaccount:openshift-infra:heapster
+oadm policy add-role-to-user edit system:serviceaccount:openshift-infra:metrics-deployer
 
 oc create -f - <<API
 apiVersion: v1
@@ -34,20 +40,22 @@ secrets:
 - name: metrics-deployer
 API
 
-oadm policy add-role-to-user edit system:serviceaccount:openshift-infra:metrics-deployer
-
-oadm policy add-cluster-role-to-user cluster-reader system:serviceaccount:openshift-infra:heapster
-
-oc secrets new metrics-deployer nothing=/dev/null
-
 cd ~
 
 cp /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml .
 
-oc process -f metrics-deployer.yaml -v MASTER_URL=https://${masterurl}:8443,IMAGE_PREFIX=openshift3/,IMAGE_VERSION=${imagever:=latest},HAWKULAR_METRICS_HOSTNAME=${hawkurl},USE_PERSISTENT_STORAGE=false | oc create -f -
+[[ ! -f ~/metrics-deployer.yaml ]] && echo "FATAL: Metrics Deployer File not found!" && exit 254
+
+oc new-app --as=system:serviceaccount:openshift-infra:metrics-deployer \
+-f metrics-deployer.yaml \
+-p HAWKULAR_METRICS_HOSTNAME=${hawkurl} \
+-p USE_PERSISTENT_STORAGE=false -p MASTER_URL=${masterurl} \
+-p IMAGE_PREFIX=openshift3/ -p IMAGE_VERSION=v${imagever}
 
 cat <<-EOF
-Add 'metricsPublicURL: "${hawkurl}/hawkular/metrics"' to /etc/origin/master/master-config.yaml ...it should look like this one
+Use "oc get pods -n openshift-infra --watch" to make sure the pods come up
+
+Then add 'metricsPublicURL: "${hawkurl}/hawkular/metrics"' to /etc/origin/master/master-config.yaml ...it should look like this one
 
 [root@ose3-master ~]# grep -i hawkular -B10 /etc/origin/master/master-config.yaml
   masterPublicURL: https://ose3-master.example.com:8443
@@ -78,6 +86,8 @@ oc delete all --all
 oc delete templates --all
 oc delete secrets `oc get secrets | egrep 'metrics|hawk|heap' | awk '{print $1}'`
 oc delete sa hawkular cassandra heapster metrics-deployer
+oc delete all,sa,templates,secrets,pvc --selector="metrics-infra"
+oc delete sa,secret metrics-deployer
 oc project default
 };
 #
