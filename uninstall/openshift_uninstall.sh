@@ -22,15 +22,21 @@ exit
 [[ $1 = "--etcd" ]] && etcd=true
 
 basic_checks
+ansible all -m shell -a 'systemctl stop atomic-openshift-master atomic-openshift-node docker || true'
+ansible all -m shell -a 'systemctl disable atomic-openshift-master atomic-openshift-node docker || true'
 
-ansible all -m shell -a 'yum remove -y openshift* atomic* openvswitch openshift-* atomic-*|| true'
+ansible all -m shell -a 'yum remove -y openshift* atomic* openvswitch openshift-* atomic-* || true'
  
 ansible all -m shell -a 'rm -rf /etc/origin/* || true '
 ansible all -m shell -a 'rm -rf /etc/sysconfig/atomic* || true '
  
 ansible all -m shell -a 'rm -rf /root/.kube || true'
 ansible all -m shell -a 'rm -rf /var/lib/origin || true'
- 
+
+ansible all -m shell -a 'rm -rf /var/lib/etcd || true'
+ansible all -m shell -a 'rm -rf /etc/etcd || true'
+ansible all -m shell -a 'rm -rf /etc/openvswitch || true'
+
 if [ ${etcd:=false} = "true" ]; then
   echo "yes"
   ansible etcd -m shell -a 'yum remove -y etcd || true'
@@ -39,5 +45,9 @@ if [ ${etcd:=false} = "true" ]; then
 fi
  
 ansible all -m yum -a 'name=atomic-openshift-utils state=latest'
+ansible all -m yum -a 'name=atomic-openshift-excluder state=latest'
+ansible all -m yum -a 'name=atomic-openshift-docker-excluder state=latest'
+ansible all -m shell -a 'atomic-openshift-excluder unexclude'
+echo "You'll probably want to reboot everything and rerun this script"
 ##
 ##
