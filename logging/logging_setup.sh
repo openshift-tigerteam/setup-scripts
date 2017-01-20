@@ -7,7 +7,6 @@ masterurl=${MASTERURL}
 masterurlport=${MASTERURL_PORT}
 ocpver=${OPENSHIFT_VERSION}
 labelnodes=${LABEL_NODES}
-##ocpuser="system:admin"
 ocpuser=$(echo -n $(oc whoami))
 #
 presetupcheck () {
@@ -25,7 +24,7 @@ presetupcheck () {
     echo "	export PUBLIC_MASTERURL=ose3-master.example.com"
     echo "	export MASTERURL=ose3-master.example.com"
     echo "	export LABEL_NODES=true"
-    echo "	export OPENSHIFT_VERSION=3.3.0"
+    echo "	export OPENSHIFT_VERSION=3.4"
     echo "	export PUBLIC_MASTERURL_PORT=8443"
     echo "	export MASTERURL_PORT=8443"
     exit
@@ -45,7 +44,7 @@ select yn in "Yes" "No"; do
     esac
 done
 
-oc create -n openshift -f /usr/share/openshift/examples/infrastructure-templates/enterprise/logging-deployer.yaml
+#oc create -n openshift -f /usr/share/openshift/examples/infrastructure-templates/enterprise/logging-deployer.yaml
 
 oadm new-project logging --node-selector=""
 
@@ -100,14 +99,10 @@ secrets:
 - name: aggregated-logging-curator
 API
 
-oc policy add-role-to-user edit --serviceaccount logging-deployer
-
-oadm policy add-scc-to-user privileged system:serviceaccount:logging:aggregated-logging-fluentd
-oadm policy add-scc-to-user privileged system:serviceaccount:logging:logging-deployer
-
-oadm policy add-cluster-role-to-user cluster-reader system:serviceaccount:logging:aggregated-logging-fluentd
-
 oadm policy add-cluster-role-to-user oauth-editor system:serviceaccount:logging:logging-deployer
+oadm policy add-scc-to-user privileged system:serviceaccount:logging:aggregated-logging-fluentd 
+oadm policy add-cluster-role-to-user cluster-reader system:serviceaccount:logging:aggregated-logging-fluentd
+oadm policy add-cluster-role-to-user rolebinding-reader system:serviceaccount:logging:aggregated-logging-elasticsearch
 
 oc create configmap logging-deployer \
    --from-literal kibana-hostname=${kibanaurl} \
@@ -120,9 +115,8 @@ oc new-app logging-deployer-template \
              --param PUBLIC_MASTER_URL=https://${pmasterurl}:${pmasterurlport} \
              --param IMAGE_PREFIX="registry.access.redhat.com/openshift3/" \
              --param MASTER_URL=https://${masterurl}:${masterurlport} \
-             --param IMAGE_VERSION=${ocpver} \
+             --param IMAGE_VERSION=v${ocpver} \
              --param MODE=install
-
 
 if ${labelnodes=:false} ; then
    oc label node --all logging-infra-fluentd=true
