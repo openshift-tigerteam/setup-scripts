@@ -52,6 +52,8 @@ oc new-app --as=system:serviceaccount:openshift-infra:metrics-deployer \
 -p USE_PERSISTENT_STORAGE=false -p MASTER_URL=${masterurl} \
 -p IMAGE_PREFIX=openshift3/ -p IMAGE_VERSION=v${imagever}
 
+oc adm policy add-role-to-user view system:serviceaccount:openshift-infra:hawkular -n openshift-infra
+
 cat <<-EOF
 Use "oc get pods -n openshift-infra --watch" to make sure the pods come up
 
