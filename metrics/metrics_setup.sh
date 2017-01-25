@@ -22,7 +22,8 @@ presetupcheck () {
 #
 setup () {
 echo "Starting cluster metrics setup..."
-[[ ! -f /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml ]] && echo "FATAL: Metrics Deployer File not found!" && exit 254
+# HOTFIX until packages are updated
+#[[ ! -f /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml ]] && echo "FATAL: Metrics Deployer File not found!" && exit 254
 oc project openshift-infra
 echo "Cleaning up environment...it's okay if you see errors here"
 oc delete all,sa,templates,secrets,pvc --selector="metrics-infra"
@@ -42,7 +43,10 @@ API
 
 cd ~
 
-cp /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml .
+# HOTFIX
+wget https://raw.githubusercontent.com/openshift/openshift-ansible/master/roles/openshift_hosted_templates/files/v1.4/enterprise/metrics-deployer.yaml
+
+#cp /usr/share/openshift/examples/infrastructure-templates/enterprise/metrics-deployer.yaml .
 
 [[ ! -f ~/metrics-deployer.yaml ]] && echo "FATAL: Metrics Deployer File not found!" && exit 254
 
