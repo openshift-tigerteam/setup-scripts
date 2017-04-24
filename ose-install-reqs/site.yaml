@@ -11,7 +11,7 @@
     shell: subscription-manager repos --disable="*"
 
   - name: Enable rhel-7-server-rpms rhel-7-server-extras-rpms rhel-7-server-ose-3.4-rpms
-    shell: subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.4-rpms"
+    shell: subscription-manager repos --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-server-ose-3.5-rpms" --enable="rhel-7-fast-datapath-rpms"
 
   - name: Make sure OpenShift Enterprise subscription is attached
     shell: subscription-manager list --consumed  | nice grep "Red Hat OpenShift Enterprise"
@@ -64,7 +64,7 @@
     yum: name=bridge-utils state=latest
 
   - name: Install docker
-    yum: name=docker-1.10.3 state=latest
+    yum: name=docker-1.12.6-16 state=latest
 
   - name: Ensure docker is running and enabled
     service: name=docker state=started enabled=yes
@@ -79,7 +79,7 @@
 - hosts: ose-masters
   sudo: yes
   tasks:
-  - name: Check master host for mounted /mnt/registry 
-    shell: df -vh /mnt/registry | awk '{print $2}' | grep ^[0-9] | sed 's/G//'
+  - name: Check master host for mounted /registry 
+    shell: df -vh /registry | awk '{print $2}' | grep ^[0-9] | sed 's/G//'
     register: registry_capacity
     failed_when: registry_capacity.stdout|int < {{registry_capacity_value_in_gb}}
